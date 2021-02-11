@@ -1,0 +1,372 @@
+<HTML>
+<HEAD>
+<TITLE>cns</TITLE>
+</HEAD>
+<BODY>
+
+<H1><CODE>cns</CODE></H1>
+
+The main function of the CNS framework.  All interaction between MATLAB and a network model on the GPU occurs via the <CODE>cns</CODE> function.  This includes initializing a model on a GPU, running it, getting and setting fields, etc.<P>
+
+<TABLE>
+<TR><TD><B>Initializing / Deallocating</B></TD></TR>
+<TR><TD>&nbsp;&nbsp;&nbsp;<A HREF="#init"><CODE>cns('init')</CODE></A></TD><TD>Initialize a network model on a GPU (or CPU).</TD></TR>
+<TR><TD>&nbsp;&nbsp;&nbsp;<A HREF="#test"><CODE>cns('test')</CODE></A></TD><TD>Test initialization, displaying memory usage.</TD></TR>
+<TR><TD>&nbsp;&nbsp;&nbsp;<A HREF="#platform"><CODE>cns('platform')</CODE></A></TD><TD>Change the defaults for some <CODE>init</CODE> parameters.</TD></TR>
+<TR><TD>&nbsp;&nbsp;&nbsp;<A HREF="#done"><CODE>cns('done')</CODE></A></TD><TD>Deallocate model, freeing resources.</TD></TR>
+<TR><TD><BR><B>Getting / Setting Fields</B></TD></TR>
+<TR><TD>&nbsp;&nbsp;&nbsp;<A HREF="#get"><CODE>cns('get')</CODE></A></TD><TD>Retrieve fields from an initialized model.</TD></TR>
+<TR><TD>&nbsp;&nbsp;&nbsp;<A HREF="#update"><CODE>cns('update')</CODE></A></TD><TD>Retrieve all variables from an initialized model.</TD></TR>
+<TR><TD>&nbsp;&nbsp;&nbsp;<A HREF="#set"><CODE>cns('set')</CODE></A></TD><TD>Change the value of fields in an initialized model.</TD></TR>
+<TR><TD><BR><B>Running the Model</B></TD></TR>
+<TR><TD>&nbsp;&nbsp;&nbsp;<A HREF="#run"><CODE>cns('run')</CODE></A></TD><TD>Run an initialized model for some number of full iterations, possibly retrieving time series of some variables.</TD></TR>
+<TR><TD>&nbsp;&nbsp;&nbsp;<A HREF="#step"><CODE>cns('step')</CODE></A></TD><TD>Run an initialized model through one or more steps of a single iteration, possibly retrieving some variables.</TD></TR>
+</TABLE>
+
+<HR>
+
+<H2><A NAME="init"><CODE>cns('init')</CODE></A></H2>
+
+Initializes a network model on a GPU (or CPU) using information provided in a <A HREF="model.html#build">model structure</A>.<P>
+
+<FONT COLOR="red"><B>Note: a given instance of MATLAB can only support a single active CNS model; once one has been initialized, you must <A HREF="#done">deallocate</A> it before you can initialize another one.</B></FONT><P>
+
+<FONT COLOR="red"><B>A given model can only use a single GPU.  To make use of multiple GPUs on one computer, you must open multiple instances of MATLAB.</B></FONT>
+
+<H3>Syntax</H3>
+
+<TABLE BORDER="1"><TR><TD><PRE>
+cns('init', m)
+cns('init', m, platform)
+cns('init', m, platform, nice)
+</PRE></TD></TR></TABLE>
+
+<DL>
+<DT><CODE>m</CODE></DT><DD>
+The <A HREF="model.html#build">model structure</A>.
+</DD><P>
+<DT><CODE>platform</CODE></DT><DD>
+One of the following (defaults to <CODE>'gpu'</CODE>):
+<UL>
+<LI><CODE>'gpu'</CODE> - use the first available GPU.
+<LI><CODE>'gpu#'</CODE> - use the specified GPU (<CODE>'gpu0'</CODE>, <CODE>'gpu1'</CODE>, etc.)
+<LI><CODE>'cpu'</CODE> - use the CPU.
+</UL>
+</DD><P>
+<DT><CODE>nice</CODE></DT><DD>
+One of the following (defaults to <CODE>'nice'</CODE>):
+<UL>
+<LI><CODE>'nice'</CODE> - yield CPU while waiting for the GPU.
+<LI><CODE>'mean'</CODE> - don't yield CPU while waiting for the GPU.
+</UL>
+</DD>
+</DL>
+
+Note: the <A HREF="#platform"><CODE>platform</CODE></A> call can be used to change the default values of <CODE>platform</CODE> and <CODE>nice</CODE> so you do not have to provide values with every <CODE>init</CODE> call.
+
+<H3>Notes</H3>
+
+CPU mode is much slower than GPU mode, but is useful when you don't have access to a GPU, or want to use the <A HREF="package.html#genmac"><CODE>PRINT</CODE></A> and <A HREF="package.html#genmac"><CODE>ERROR</CODE></A> macros for debugging.<P>
+
+The <CODE>mean</CODE> option can be about 10% faster than <CODE>nice</CODE>, but it causes CPU usage to stay pinned at 100% even when the only processing is happening on the GPU, making the CPU unavailable to other processes.<P>
+
+Initialization sets the value of <A HREF="package.html#genmac"><CODE>ITER_NO</CODE></A> to 0.<P>
+
+<HR>
+
+<H2><A NAME="test"><CODE>cns('test')</CODE></A></H2>
+
+Performs a test initialization and prints a summary of memory usage, along with any errors.  This is useful for determining why an <CODE>init</CODE> call might be failing.
+
+<H3>Syntax</H3>
+
+Parameters are the same as for the <A HREF="#init"><CODE>init</CODE></A> call.
+
+<H3>Notes</H3>
+
+The <CODE>test</CODE> call <A HREF="#done">deallocates</A> the model immediately, whether the initialization succeeds or not.<P>
+
+<HR>
+
+<H2><A NAME="platform"><CODE>cns('platform')</CODE></A></H2>
+
+Allows you to change the default values of some parameters to the <A HREF="#init"><CODE>init</CODE></A> call so that you do not have to provide them in every <CODE>init</CODE> call.
+
+<H3>Syntax</H3>
+
+<TABLE BORDER="1"><TR><TD><PRE>
+cns('platform', platform)
+cns('platform', platform, nice)
+</PRE></TD></TR></TABLE>
+
+<DL>
+<DT><CODE>platform, nice</CODE></DT><DD>
+These have the same meaning as in the <A HREF="#init"><CODE>init</CODE></A> call.
+</DD>
+</DL>
+
+<H3>Notes</H3>
+
+The settings you provide here become the defaults for the <CODE>init</CODE> call.  These defaults will persist until MATLAB's global variables are cleared.<P>
+
+<HR>
+
+<H2><A NAME="done"><CODE>cns('done')</CODE></A></H2>
+
+Deallocates an <A HREF="#init">initialized</A> model, freeing up GPU (or CPU) resources.
+
+<H3>Syntax</H3>
+
+<TABLE BORDER="1"><TR><TD><PRE>
+cns('done')
+</PRE></TD></TR></TABLE>
+
+<HR>
+
+<H2><A NAME="get"><CODE>cns('get')</CODE></A></H2>
+
+Retrieves values from one or more <A HREF="package.html#field">fields</A> of an <A HREF="#init">initialized network model</A>.  Usually you will only do this after one or more <A HREF="#run">iterations</A> or <A HREF="#step">steps</A> have been executed.
+
+<H3>Syntax</H3>
+
+<TABLE BORDER="1"><TR><TD><PRE>
+a = cns('get', <A HREF="#field"><I>field-params</I></A>)
+[a, a, ...] = cns('get', {<A HREF="#field"><I>field-params</I></A>}, {<A HREF="#field"><I>field-params</I></A>}, ...)
+</PRE></TD></TR></TABLE>
+
+<DL>
+<DT><CODE><I>field-params</I></CODE></DT><DD>
+Identifies a field, or a subrange of a field, to retrieve (click <A HREF="#field">here</A> for details).  The number of these must match the number of outputs.  The {} can be omitted when only one field/subrange is requested.
+</DD><P>
+<DT><CODE>a</CODE></DT><DD>
+The value requested.  The number of these outputs must match the number of <CODE><I>field-params</I></CODE>.
+</DD>
+</DL>
+
+<HR>
+
+<H2><A NAME="update"><CODE>cns('update')</CODE></A></H2>
+
+Updates a <A HREF="model.html#build">model structure</A> with the current values of all variables in the <A HREF="#init">active model</A>.  This allows you to save the state of a running model.  If you then <A HREF="#done">deallocate</A> the model, you can use the updated model structure to <A HREF="#init">reactivate</A> it in the same state.
+
+<H3>Syntax</H3>
+
+<TABLE BORDER="1"><TR><TD><PRE>
+m2 = cns('update', m1)
+</PRE></TD></TR></TABLE>
+
+<DL>
+<DT><CODE>m1</CODE></DT><DD>
+The original model structure.
+</DD><P>
+<DT><CODE>m2</CODE></DT><DD>
+The updated model structure.
+</DD>
+</DL>
+
+<H3>Notes</H3>
+
+In many situations, the updated model structure will be a lot larger than the one used to initialize the network in the first place.  Variables with default values will probably no longer be at those values, and even if they were, the <CODE>update</CODE> call would still store separate values for every cell and synapse in the updated model structure.<P>
+
+<HR>
+
+<H2><A NAME="set"><CODE>cns('set')</CODE></A></H2>
+
+Changes values in one or more <A HREF="package.html#field">fields</A> of an <A HREF="#init">initialized network model</A>.  Most commonly done to introduce new input data.
+
+<H3>Syntax</H3>
+
+<TABLE BORDER="1"><TR><TD><PRE>
+cns('set', <A HREF="#field"><I>field-params</I></A>, a)
+cns('set', {<A HREF="#field"><I>field-params</I></A>, a}, {<A HREF="#field"><I>field-params</I></A>, a}, ...)
+</PRE></TD></TR></TABLE>
+
+<DL>
+<DT><CODE><I>field-params</I></CODE></DT><DD>
+Identifies a field, or a subrange of a field, to set (click <A HREF="#field">here</A> for details).  The {} can be omitted when only one field/subrange is being set.
+</DD><P>
+<DT><CODE>a</CODE></DT><DD>
+The new value for the corresponding field/subrange.  Its size must match that of the field/subrange, or it can be a scalar, which sets the entire field/subrange to the same value.
+</DD>
+</DL>
+
+<HR>
+
+<H2><A NAME="run"><CODE>cns('run')</CODE></A></H2>
+
+Runs an <A HREF="#init">initialized model</A> for some number of full iterations.  Can also retrieve the values of variables at regular intervals as the model iterates.
+
+<H3>Syntax</H3>
+
+<TABLE BORDER="1"><TR><TD><PRE>
+cns('run')
+cns('run', iterations)
+
+[s, s, ...] = cns('run', {<A HREF="#field"><I>field-params</I></A>}, {<A HREF="#field"><I>field-params</I></A>}, ...)
+[s, s, ...] = cns('run', iterations, {<A HREF="#field"><I>field-params</I></A>}, {<A HREF="#field"><I>field-params</I></A>}, ...)
+[s, s, ...] = cns('run', iterations, sampleRate, {<A HREF="#field"><I>field-params</I></A>}, {<A HREF="#field"><I>field-params</I></A>}, ...)
+[s, s, ...] = cns('run', iterations, sampleRate, bufferSize, {<A HREF="#field"><I>field-params</I></A>}, {<A HREF="#field"><I>field-params</I></A>}, ...)
+</PRE></TD></TR></TABLE>
+
+<DL>
+<DT><CODE>iterations</CODE></DT><DD>
+The number of full iterations of the model to perform.  Defaults to 1.
+</DD><P>
+<DT><CODE><I>field-params</I></CODE></DT><DD>
+Identifies a variable, or a subrange of a variable, to retrieve (click <A HREF="#field">here</A> for details).  The number of these must match the number of outputs.  By default, the variable/subrange will be retrieved at the end of each iteration; this can be changed by specifying <CODE>sampleRate</CODE>.
+</DD><P>
+<DT><CODE>s</CODE></DT><DD>
+The value requested.  The number of these outputs must match the number of <CODE><I>field-params</I></CODE>.  Because sampling may have occurred multiple times (depending on <CODE>iterations</CODE> and <CODE>sampleRate</CODE>), each output will have an additional dimension representing the sample number.  This will be dimension 1.<P>
+</DD><P>
+<DT><CODE>sampleRate</CODE></DT><DD>
+Number of iterations between each sampling of the requested variable(s).  Defaults to 1.
+</DD><P>
+<DT><CODE>bufferSize</CODE></DT><DD>
+By default, CNS attempts to collect all the outputs <CODE>[s, s, ...]</CODE> in GPU memory and transfer them back to MATLAB when the <CODE>run</CODE> call is complete.  This is fastest, but may require more GPU memory than is available.  Setting <CODE>bufferSize</CODE> to <CODE>n</CODE> means CNS will perform a GPU-MATLAB transfer whenever it has collected <CODE>n</CODE> samples (and any remaining samples will get transferred when the <CODE>run</CODE> call completes).
+</DD>
+</DL>
+
+<H3>Notes</H3>
+
+The <CODE>run</CODE> call automatically increments <A HREF="package.html#genmac"><CODE>ITER_NO</CODE></A> after every iteration.<P>
+
+<HR>
+
+<H2><A NAME="step"><CODE>cns('step')</CODE></A></H2>
+
+Runs an <A HREF="#init">initialized model</A> through one or more <A HREF="model.html#execorder">steps</A> of a single iteration.  Can optionally retrieve the values of some variables when done.</TD></TR>
+
+<H3>Syntax</H3>
+
+<TABLE BORDER="1"><TR><TD><PRE>
+cns('step', step)
+cns('step', step1, step2)
+
+[a, a, ...] = cns('step', step, {<A HREF="#field"><I>field-params</I></A>}, {<A HREF="#field"><I>field-params</I></A>}, ...)
+[a, a, ...] = cns('step', step1, step2, {<A HREF="#field"><I>field-params</I></A>}, {<A HREF="#field"><I>field-params</I></A>}, ...)
+</PRE></TD></TR></TABLE>
+
+<DL>
+<DT><CODE>step</CODE></DT><DD>
+A single <A HREF="model.html#execorder">step number</A> to execute.
+</DD><P>
+<DT><CODE>step1, step2</CODE></DT><DD>
+A range of <A HREF="model.html#execorder">step numbers</A> to execute.
+</DD><P>
+<DT><CODE><I>field-params</I></CODE></DT><DD>
+Identifies a variable, or a subrange of a variable, to retrieve when finished (click <A HREF="#field">here</A> for details).  The number of these must match the number of outputs.
+</DD><P>
+<DT><CODE>a</CODE></DT><DD>
+The value requested.  The number of these outputs must match the number of <CODE><I>field-params</I></CODE>.
+</DD>
+</DL>
+
+<H3>Notes</H3>
+
+The <CODE>step</CODE> call does not update <A HREF="package.html#genmac"><CODE>ITER_NO</CODE></A>, although you may do so yourself via a <A HREF="#set"><CODE>set</CODE></A> call.<P>
+
+<HR>
+
+<H2><A NAME="field">Field Parameters</A></H2>
+
+The <A HREF="#get"><CODE>get</CODE></A> and <A HREF="#set"><CODE>set</CODE></A> calls, and optionally the <A HREF="#run"><CODE>run</CODE></A> and <A HREF="#step"><CODE>step</CODE></A> calls, all involve identifying fields or subranges of fields.
+
+<H3>Entire Fields</H3>
+
+Identifying an <I>entire</I> field takes these two parameters.<P>
+
+<TABLE BORDER="1"><TR><TD><PRE>
+z, field
+</PRE></TD></TR></TABLE>
+
+<DL>
+<DT><CODE>z</CODE></DT><DD>
+The layer number, or <CODE>0</CODE> for a model-level field.
+</DD><P>
+<DT><CODE>field</CODE></DT><DD>
+The name of the field.
+</DD>
+</DL>
+
+<H3>Subranges</H3>
+
+For some field classes, you can optionally identify only a <I>subrange</I> to retrieve or set.  By "subrange" we mean:
+<UL>
+<LI>A single cell instead of an entire layer.
+<LI>Selected synapses of a synapse field.
+<LI>Selected values of a multivalued field.
+</UL>
+
+This is done using additional arguments, i.e.:<P>
+
+<TABLE BORDER="1"><TR><TD><PRE>
+z, field, <I>additional-arguments</I>
+</PRE></TD></TR></TABLE><P>
+
+These are as follows:<P>
+
+<TABLE BORDER="1"><TR>
+<TD ROWSPAN="2"><B>Field Class</B></TD>
+<TD COLSPAN="2" ALIGN="center"><B>Optional Additional Arguments</B></TD>
+</TR><TR>
+<TD ALIGN="center"><B>Single-Valued</B></TD>
+<TD ALIGN="center"><B>Multivalued</B></TD>
+</TR><TR>
+<TD><A HREF="package.html#cfield">parameter</A></TD>
+<TD><I>none</I></TD>
+<TD><PRE>
+values
+</PRE></TD>
+</TR><TR>
+<TD><A HREF="package.html#afield">N-D array</A></TD>
+<TD><PRE>
+c1, c2, ...
+</PRE></TD>
+<TD><PRE>
+<I>value</I>
+<I>value</I>, c1, c2, ...
+</PRE></TD>
+</TR><TR>
+<TD><A HREF="package.html#cvfield">cell field</A></TD>
+<TD><PRE>
+c1, c2, ...
+</PRE></TD>
+<TD><PRE>
+values
+values, c1, c2, ...
+</PRE></TD>
+</TR><TR>
+<TD><A HREF="package.html#sfield">synapse field</A></TD>
+<TD><PRE>
+synapses
+synapses, c1, c2, ...
+</PRE></TD>
+<TD><PRE>
+values
+values, synapses
+values, synapses, c1, c2, ...
+</PRE></TD>
+</TR><TR>
+<TD><A HREF="package.html#genmac">ITER_NO</A></TD>
+<TD><I>none</I></TD>
+<TD><I>n/a</I></TD>
+</TR></TABLE><P>
+
+<DL>
+<DT><CODE>values</CODE></DT><DD>
+Identifies certain values of a multivalued field.  A scalar number indicates one value, a two-element vector indicates a range of values, and [] indicates all values.  Defaults to [].
+</DD><P>
+<DT><CODE><I>value</I></CODE></DT><DD>
+For multivalued N-D array fields.  Identifies one particular value.  (Note: this parameter is actually required.)
+</DD><P>
+<DT><CODE>synapses</CODE></DT><DD>
+For synapse fields.  Identifies certain synapses.  A scalar number indicates one synapse, a two-element vector indicates a range of synapses, and [] indicates all synapses.  Defaults to [].
+</DD><P>
+<DT><CODE>c1, c2, ...</CODE></DT><DD>
+For cell and synapse fields, identifies a particular cell in layer <CODE>z</CODE> using from 1 to N indices, where N is the <A HREF="package.html#dims">dimensionality</A> of layer <CODE>z</CODE>.  (See <A HREF="cns_iconv.html"><CODE>cns_iconv</CODE></A> for an explanation of using less than N indices.)  If no indices are provided, defaults to the entire layer.<P>
+For N-D array fields, identifies a particular element using from 1 to N indices, where N is the dimensionality of the array.  If no indices are provided, defaults to the entire array.
+</DD>
+</DL>
+
+</BODY>
+</HTML>

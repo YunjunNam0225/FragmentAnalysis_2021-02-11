@@ -1,0 +1,10 @@
+Path: cns
+URL: file:///cbcl/cbcl01/jmutch/repos/cns
+Repository Root: file:///cbcl/cbcl01/jmutch/repos/cns
+Repository UUID: 9a85d05d-bd27-0410-91ae-963345920d6b
+Revision: 344
+Node Kind: directory
+Last Changed Author: jmutch
+Last Changed Rev: 344
+Last Changed Date: 2010-07-11 03:40:14 -0400 (Sun, 11 Jul 2010)
+

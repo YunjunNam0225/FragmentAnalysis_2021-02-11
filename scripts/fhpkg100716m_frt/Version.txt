@@ -1,0 +1,10 @@
+Path: fhpkg
+URL: file:///cbcl/cbcl01/jmutch/repos/fhpkg
+Repository Root: file:///cbcl/cbcl01/jmutch/repos/fhpkg
+Repository UUID: cdc4f94b-656a-0410-9e82-f750e1fd0d71
+Revision: 61
+Node Kind: directory
+Last Changed Author: jmutch
+Last Changed Rev: 61
+Last Changed Date: 2010-06-24 23:45:16 -0400 (Thu, 24 Jun 2010)
+
